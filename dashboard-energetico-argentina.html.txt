@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ Dashboard Energético Argentina</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #581c87 50%, #0f172a 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.25rem;
+            color: #d1d5db;
+        }
+
+        /* Navigation */
+        .nav {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .nav-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            color: white;
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.25);
+        }
+
+        .nav-btn:not(.active) {
+            background: #374151;
+            color: #d1d5db;
+        }
+
+        .nav-btn:not(.active):hover {
+            background: #4b5563;
+        }
+
+        /* Sections */
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        /* Cards */
+        .card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .card-header {
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #a855f7;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Grid layouts */
+        .grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .grid-cols-1 { grid-template-columns: repeat(1, 1fr); }
+        .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+        .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+        .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+        @media (min-width: 768px) {
+            .md\\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+            .md\\:grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+            .md\\:grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+        }
+
+        @media (min-width: 1024px) {
+            .lg\\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+            .lg\\:grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+            .lg\\:grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+        }
+
+        /* KPI Cards */
+        .kpi-card {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(30, 41, 59, 0.5));
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .kpi-card.purple { background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(30, 41, 59, 0.5)); border-color: rgba(139, 92, 246, 0.2); }
+        .kpi-card.pink { background: linear-gradient(135deg, rgba(236, 72, 153, 0.2), rgba(30, 41, 59, 0.5)); border-color: rgba(236, 72, 153, 0.2); }
+        .kpi-card.blue { background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(30, 41, 59, 0.5)); border-color: rgba(59, 130, 246, 0.2); }
+        .kpi-card.green { background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(30, 41, 59, 0.5)); border-color: rgba(34, 197, 94, 0.2); }
+
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .kpi-change {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        .kpi-change.positive { color: #10b981; }
+        .kpi-change.negative { color: #ef4444; }
+
+        .kpi-icon {
+            font-size: 2rem;
+            opacity: 0.8;
+        }
+
+        /* Price Cards */
+        .price-card {
+            text-align: center;
+            padding: 2rem;
+            border-radius: 1rem;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.2));
+        }
+
+        .price-title {
+            font-size: 1.125rem;
+            margin-bottom: 0.5rem;
+            color: #a855f7;
+        }
+
+        .price-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Company Cards */
+        .company-card {
+            background: linear-gradient(135deg, rgba(71, 85, 105, 0.5), rgba(30, 41, 59, 0.5));
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            border-radius: 1rem;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .company-card:hover {
+            border-color: rgba(139, 92, 246, 0.5);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.1);
+        }
+
+        .company-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .company-name {
+            font-size: 1.125rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .company-symbol {
+            font-size: 0.875rem;
+            color: #9ca3af;
+        }
+
+        .company-badge {
+            background: rgba(139, 92, 246, 0.2);
+            color: #a855f7;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+        }
+
+        .company-price {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .price {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .change {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .change.positive { color: #10b981; }
+        .change.negative { color: #ef4444; }
+
+        /* Search */
+        .search-container {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+            background: #374151;
+            border: 1px solid #4b5563;
+            border-radius: 0.5rem;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .search-input::placeholder {
+            color: #9ca3af;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+        }
+
+        /* Chart container */
+        .chart-container {
+            height: 320px;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .select {
+            padding: 0.5rem;
+            background: #374151;
+            border: 1px solid #4b5563;
+            border-radius: 0.5rem;
+            color: white;
+            min-width: 150px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            padding: 1rem;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 1rem;
+            padding: 2rem;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #a855f7;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: white;
+        }
+
+        /* Stars */
+        .stars {
+            display: flex;
+            gap: 0.125rem;
+            align-items: center;
+        }
+
+        .star {
+            color: #9ca3af;
+        }
+
+        .star.filled {
+            color: #fbbf24;
+        }
+
+        /* News */
+        .news-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem;
+            background: rgba(71, 85, 105, 0.3);
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .news-content {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .news-dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 50%;
+        }
+
+        .news-dot.positive { background: #10b981; }
+        .news-dot.negative { background: #ef4444; }
+        .news-dot.neutral { background: #f59e0b; }
+
+        .news-title {
+            font-weight: 500;
+            color: white;
+        }
+
+        .news-time {
+            font-size: 0.875rem;
+            color: #9ca3af;
+        }
+
+        /* Production cards */
+        .production-card {
+            background: linear-gradient(135deg, rgba(71, 85, 105, 0.3), rgba(30, 41, 59, 0.3));
+            border: 1px solid rgba(71, 85, 105, 0.3);
+            border-radius: 1rem;
+            padding: 1rem;
+        }
+
+        .production-title {
+            font-weight: 600;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .production-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #9ca3af;
+        }
+
+        .stat-value {
+            font-weight: 500;
+            color: white;
+        }
+
+        .stat-growth {
+            font-weight: 500;
+        }
+
+        .stat-growth.positive { color: #10b981; }
+        .stat-growth.negative { color: #ef4444; }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            color: #9ca3af;
+            font-size: 0.875rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(71, 85, 105, 0.5);
+        }
+
+        .footer-title {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .kpi-value {
+                font-size: 1.5rem;
+            }
+            
+            .price-value {
+                font-size: 2rem;
+            }
+            
+            .modal-content {
+                margin: 1rem;
+                padding: 1rem;
+            }
+        }
+
+        /* Utility classes */
+        .hidden { display: none; }
+        .text-center { text-align: center; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mb-6 { margin-bottom: 1.5rem; }
+        .space-y-4 > * + * { margin-top: 1rem; }
+        .space-y-6 > * + * { margin-top: 1.5rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>⚡ Dashboard Energético</h1>
+            <p>Mercado Petrolero Argentino - Análisis en Tiempo Real</p>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav">
+            <button class="nav-btn active" onclick="showSection('overview')" data-section="overview">
+                <i class="fas fa-chart-line"></i>
+                Resumen
+            </button>
+            <button class="nav-btn" onclick="showSection('cotizaciones')" data-section="cotizaciones">
+                <i class="fas fa-dollar-sign"></i>
+                Cotizaciones
+            </button>
+            <button class="nav-btn" onclick="showSection('graficos')" data-section="graficos">
+                <i class="fas fa-chart-bar"></i>
+                Análisis
+            </button>
+            <button class="nav-btn" onclick="showSection('empresas')" data-section="empresas">
+                <i class="fas fa-building"></i>
+                Empresas
+            </button>
+            <button class="nav-btn" onclick="showSection('produccion')" data-section="produccion">
+                <i class="fas fa-industry"></i>
+                Producción
+            </button>
+        </nav>
+
+        <!-- Overview Section -->
+        <section id="overview" class="section active">
+            <div class="space-y-6">
+                <!-- KPI Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+                    <div class="kpi-card purple">
+                        <div>
+                            <p style="color: #a855f7; font-size: 0.875rem;">Precio WTI</p>
+                            <p class="kpi-value">$88.00</p>
+                            <div class="kpi-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+2.3%</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-gas-pump kpi-icon" style="color: #a855f7;"></i>
+                    </div>
+
+                    <div class="kpi-card pink">
+                        <div>
+                            <p style="color: #ec4899; font-size: 0.875rem;">Producción Nacional</p>
+                            <p class="kpi-value">1.2M</p>
+                            <div class="kpi-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+8.1%</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-industry kpi-icon" style="color: #ec4899;"></i>
+                    </div>
+
+                    <div class="kpi-card blue">
+                        <div>
+                            <p style="color: #3b82f6; font-size: 0.875rem;">Empresas Activas</p>
+                            <p class="kpi-value">156</p>
+                            <div class="kpi-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+12</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-building kpi-icon" style="color: #3b82f6;"></i>
+                    </div>
+
+                    <div class="kpi-card green">
+                        <div>
+                            <p style="color: #22c55e; font-size: 0.875rem;">Inversión 2025</p>
+                            <p class="kpi-value">$8.5B</p>
+                            <div class="kpi-change positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>+15.2%</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-dollar-sign kpi-icon" style="color: #22c55e;"></i>
+                    </div>
+                </div>
+
+                <!-- News Section -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">
+                            <i class="fas fa-globe"></i>
+                            Noticias del Sector
+                        </h2>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="news-item">
+                            <div class="news-content">
+                                <div class="news-dot positive"></div>
+                                <div>
+                                    <p class="news-title">YPF anuncia nueva inversión en Vaca Muerta</p>
+                                    <p class="news-time">Hace 2 horas</p>
+                                </div>
+                            </div>
+                            <i class="fas fa-info-circle" style="color: #9ca3af;"></i>
+                        </div>
+                        <div class="news-item">
+                            <div class="news-content">
+                                <div class="news-dot positive"></div>
+                                <div>
+                                    <p class="news-title">Precio del petróleo alcanza máximos del año</p>
+                                    <p class="news-time">Hace 4 horas</p>
+                                </div>
+                            </div>
+                            <i class="fas fa-info-circle" style="color: #9ca3af;"></i>
+                        </div>
+                        <div class="news-item">
+                            <div class="news-content">
+                                <div class="news-dot neutral"></div>
+                                <div>
+                                    <p class="news-title">Nuevas regulaciones ambientales en discusión</p>
+                                    <p class="news-time">Hace 6 horas</p>
+                                </div>
+                            </div>
+                            <i class="fas fa-info-circle" style="color: #9ca3af;"></i>
+                        </div>
+                        <div class="news-item">
+                            <div class="news-content">
+                                <div class="news-dot positive"></div>
+                                <div>
+                                    <p class="news-title">Vista Oil reporta producción récord</p>
+                                    <p class="news-time">Hace 8 horas</p>
+                                </div>
+                            </div>
+                            <i class="fas fa-info-circle" style="color: #9ca3af;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Cotizaciones Section -->
+        <section id="cotizaciones" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Precios Internacionales</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3">
+                    <div class="price-card">
+                        <h3 class="price-title">Brent</h3>
+                        <div class="price-value">$89.45</div>
+                        <div class="kpi-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+1.8%</span>
+                        </div>
+                    </div>
+                    <div class="price-card">
+                        <h3 class="price-title">WTI</h3>
+                        <div class="price-value">$86.20</div>
+                        <div class="kpi-change negative">
+                            <i class="fas fa-arrow-down"></i>
+                            <span>-0.5%</span>
+                        </div>
+                    </div>
+                    <div class="price-card">
+                        <h3 class="price-title">Gas Natural</h3>
+                        <div class="price-value">$3.42</div>
+                        <div class="kpi-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+3.1%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Gráficos Section -->
+        <section id="graficos" class="section">
+            <div class="controls">
+                <select class="select" id="chartType" onchange="updateChart()">
+                    <option value="line">Líneas</option>
+                    <option value="bar">Barras</option>
+                    <option value="area">Área</option>
+                </select>
+                <select class="select" id="timeRange">
+                    <option value="1m">1 Mes</option>
+                    <option value="3m">3 Meses</option>
+                    <option value="6m" selected>6 Meses</option>
+                    <option value="1y">1 Año</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Evolución de Precios</h2>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="priceChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Distribución por Sector</h2>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="sectorChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Empresas Section -->
+        <section id="empresas" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-building"></i>
+                        Empresas del Sector Energético
+                    </h2>
+                </div>
+
+                <div class="search-container">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" class="search-input" placeholder="Buscar empresa..." id="searchInput" oninput="filterCompanies()">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3" id="companiesGrid">
+                    <!-- Companies will be populated by JavaScript -->
+                </div>
+
+                <div id="noResults" class="text-center hidden" style="padding: 3rem; color: #9ca3af;">
+                    <i class="fas fa-search" style="font-size: 3rem; opacity: 0.5; margin-bottom: 1rem;"></i>
+                    <p>No se encontraron empresas que coincidan con la búsqueda.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Producción Section -->
+        <section id="produccion" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">
+                        <i class="fas fa-industry"></i>
+                        Producción por Región
+                    </h2>
+                </div>
+                <div class="chart-container mb-6">
+                    <canvas id="productionChart"></canvas>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4" id="productionCards">
+                    <!-- Production cards will be populated by JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-title">
+                <i class="fas fa-bolt" style="color: #a855f7;"></i>
+                <span>© 2025 Dashboard Energético Argentino</span>
+            </div>
+            <p>Datos simulados para demostración | Desarrollado con HTML, CSS y JavaScript</p>
+        </footer>
+    </div>
+
+    <!-- Modal -->
+    <div id="companyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">
+                    <i class="fas fa-building"></i>
+                    <span id="modalCompanyName"></span>
+                </h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalContent">
+                <!-- Modal content will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data
+        const chartData = [
+            { month: "Ene", price: 75, volume: 120, volatility: 2.1 },
+            { month: "Feb", price: 78, volume: 135, volatility: 1.8 },
+            { month: "Mar", price: 80, volume: 142, volatility: 2.3 },
+            { month: "Abr", price: 77, volume: 128, volatility: 2.7 },
+            { month: "May", price: 85, volume: 156, volatility: 1.9 },
+            { month: "Jun", price: 88, volume: 168, volatility: 2.2 },
+        ];
+
+        const sectorData = [
+            { name: "Exploración", value: 35, color: "#8B5CF6" },
+            { name: "Refinación", value: 28, color: "#A78BFA" },
+            { name: "Distribución", value: 22, color: "#C4B5FD" },
+            { name: "Servicios", value: 15, color: "#DDD6FE" },
+        ];
+
+        const productionData = [
+            { region: "Vaca Muerta", production: 450, growth: 12.5 },
+            { region: "Golfo San Jorge", production: 280, growth: -2.1 },
+            { region: "Cuenca Neuquina", production: 320, growth: 8.3 },
+            { region: "Cuenca Austral", production: 180, growth: 4.7 },
+        ];
+
+        const companies = [
+            {
+                name: "YPF",
+                symbol: "YPFD",
+                price: 12.45,
+                change: 2.3,
+                sector: "Petróleo",
+                marketCap: "8.2B",
+                volume: "2.1M",
+                description: "YPF S.A. es la empresa energética más grande de Argentina. Opera en toda la cadena de valor del petróleo y gas, desde la exploración y producción hasta la refinación y comercialización.",
+                operations: "Líder en exploración en Vaca Muerta, opera 15 refinerías y más de 1,500 estaciones de servicio en Argentina. Produce 450,000 barriles de petróleo equivalente por día.",
+                founded: "1922",
+                employees: "19,000",
+                headquarters: "Buenos Aires, Argentina",
+                rating: 4.2,
+            },
+            {
+                name: "Pampa Energía",
+                symbol: "PAM",
+                price: 28.9,
+                change: -1.2,
+                sector: "Energía",
+                marketCap: "3.1B",
+                volume: "890K",
+                description: "Pampa Energía es una empresa integrada de energía que opera en generación eléctrica, exploración y producción de petróleo y gas.",
+                operations: "Genera 4,500 MW de energía eléctrica y produce 45,000 barriles de petróleo equivalente por día. Tiene operaciones en 8 provincias argentinas.",
+                founded: "2005",
+                employees: "3,200",
+                headquarters: "Buenos Aires, Argentina",
+                rating: 3.8,
+            },
+            {
+                name: "Vista Oil & Gas",
+                symbol: "VIST",
+                price: 8.75,
+                change: 4.1,
+                sector: "Gas",
+                marketCap: "1.8B",
+                volume: "1.2M",
+                description: "Vista Oil & Gas es una empresa independiente de exploración y producción enfocada en recursos no convencionales en Vaca Muerta.",
+                operations: "Especializada en fracking y extracción de shale oil/gas. Opera 180 pozos activos en Vaca Muerta con producción de 85,000 boe/d.",
+                founded: "2017",
+                employees: "850",
+                headquarters: "Buenos Aires, Argentina",
+                rating: 4.0,
+            },
+            {
+                name: "Tecpetrol",
+                symbol: "TEC",
+                price: 15.6,
+                change: 1.8,
+                sector: "Petróleo",
+                marketCap: "2.4B",
+                volume: "650K",
+                description: "Tecpetrol es una empresa argentina de exploración y producción de hidrocarburos, subsidiaria del Grupo Techint.",
+                operations: "Produce 120,000 boe/d principalmente en Vaca Muerta y Fortín de Piedra. Pionera en desarrollo de recursos no convencionales en Argentina.",
+                founded: "1946",
+                employees: "2,100",
+                headquarters: "Buenos Aires, Argentina",
+                rating: 3.9,
+            },
+            {
+                name: "CGC",
+                symbol: "CGC",
+                price: 22.3,
+                change: -0.5,
+                sector: "Gas",
+                marketCap: "1.2B",
+                volume: "420K",
+                description: "Compañía General de Combustibles es una empresa integrada de energía con foco en gas natural y generación eléctrica.",
+                operations: "Distribuye gas natural a 2.8 millones de usuarios y genera 1,200 MW de energía eléctrica. Opera gasoductos de 3,500 km de extensión.",
+                founded: "1992",
+                employees: "4,500",
+                headquarters: "Buenos Aires, Argentina",
+                rating: 3.7,
+            },
+            {
+                name: "Capex",
+                symbol: "CAPX",
+                price: 6.8,
+                change: 3.2,
+                sector: "Servicios",
+                marketCap: "890M",
+                volume: "780K",
+                description: "Capex S.A. es una empresa de servicios petroleros que brinda soluciones integrales para la industria de hidrocarburos.",
+                operations: "Presta servicios de perforación, completación y workover. Opera 45 equipos de perforación y ha completado más de 800 pozos en Vaca Muerta.",
+                founded: "1978",
+                employees: "1,800",
+                headquarters: "Neuquén, Argentina",
+                rating: 3.6,
+            },
+        ];
+
+        let filteredCompanies = [...companies];
+        let priceChart, sectorChart, productionChart;
+
+        // Navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from all nav buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Add active class to clicked button
+            document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
+            
+            // Initialize charts when sections are shown
+            if (sectionId === 'graficos') {
+                setTimeout(initCharts, 100);
+            } else if (sectionId === 'produccion') {
+                setTimeout(initProductionChart, 100);
+            }
+        }
+
+        // Initialize charts
+        function initCharts() {
+            if (priceChart) priceChart.destroy();
+            if (sectorChart) sectorChart.destroy();
+
+            // Price Chart
+            const priceCtx = document.getElementById('priceChart').getContext('2d');
+            priceChart = new Chart(priceCtx, {
+                type: 'line',
+                data: {
+                    labels: chartData.map(d => d.month),
+                    datasets: [{
+                        label: 'Precio USD',
+                        data: chartData.map(d => d.price),
+                        borderColor: '#8B5CF6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#F1F5F9' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#9CA3AF' },
+                            grid: { color: '#374151' }
+                        },
+                        y: {
+                            ticks: { color: '#9CA3AF' },
+                            grid: { color: '#374151' }
+                        }
+                    }
+                }
+            });
+
+            // Sector Chart
+            const sectorCtx = document.getElementById('sectorChart').getContext('2d');
+            sectorChart = new Chart(sectorCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: sectorData.map(d => d.name),
+                    datasets: [{
+                        data: sectorData.map(d => d.value),
+                        backgroundColor: sectorData.map(d => d.color),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#F1F5F9' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initProductionChart() {
+            if (productionChart) productionChart.destroy();
+
+            const productionCtx = document.getElementById('productionChart').getContext('2d');
+            productionChart = new Chart(productionCtx, {
+                type: 'bar',
+                data: {
+                    labels: productionData.map(d => d.region),
+                    datasets: [{
+                        label: 'Producción (k bbl/d)',
+                        data: productionData.map(d => d.production),
+                        backgroundColor: '#8B5CF6',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#F1F5F9' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#9CA3AF' },
+                            grid: { color: '#374151' }
+                        },
+                        y: {
+                            ticks: { color: '#9CA3AF' },
+                            grid: { color: '#374151' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChart() {
+            const chartType = document.getElementById('chartType').value;
+            if (priceChart) {
+                priceChart.destroy();
+                const ctx = document.getElementById('priceChart').getContext('2d');
+                priceChart = new Chart(ctx, {
+                    type: chartType === 'area' ? 'line' : chartType,
+                    data: {
+                        labels: chartData.map(d => d.month),
+                        datasets: [{
+                            label: 'Precio USD',
+                            data: chartData.map(d => d.price),
+                            borderColor: '#8B5CF6',
+                            backgroundColor: chartType === 'area' ? 'rgba(139, 92, 246, 0.3)' : '#8B5CF6',
+                            borderWidth: 3,
+                            fill: chartType === 'area',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { color: '#F1F5F9' }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { color: '#9CA3AF' },
+                                grid: { color: '#374151' }
+                            },
+                            y: {
+                                ticks: { color: '#9CA3AF' },
+                                grid: { color: '#374151' }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Companies
+        function renderCompanies() {
+            const grid = document.getElementById('companiesGrid');
+            const noResults = document.getElementById('noResults');
+            
+            if (filteredCompanies.length === 0) {
+                grid.innerHTML = '';
+                noResults.classList.remove('hidden');
+                return;
+            }
+            
+            noResults.classList.add('hidden');
+            
+            grid.innerHTML = filteredCompanies.map(company => `
+                <div class="company-card" onclick="openModal('${company.symbol}')">
+                    <div class="company-header">
+                        <div>
+                            <h3 class="company-name">${company.name}</h3>
+                            <p class="company-symbol">${company.symbol}</p>
+                            <div class="stars">
+                                ${renderStars(company.rating)}
+                                <span style="color: #9ca3af; font-size: 0.75rem; margin-left: 0.25rem;">(${company.rating})</span>
+                            </div>
+                        </div>
+                        <span class="company-badge">${company.sector}</span>
+                    </div>
+                    <div class="company-price">
+                        <span class="price">$${company.price}</span>
+                        <div class="change ${company.change >= 0 ? 'positive' : 'negative'}">
+                            <i class="fas fa-arrow-${company.change >= 0 ? 'up' : 'down'}"></i>
+                            <span>${company.change >= 0 ? '+' : ''}${company.change}%</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-size: 0.875rem; color: #9ca3af; margin-top: 0.5rem;">
+                        <span>Cap. Mercado: ${company.marketCap}</span>
+                        <span>Volumen: ${company.volume}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderStars(rating) {
+            let stars = '';
+            for (let i = 1; i <= 5; i++) {
+                stars += `<i class="fas fa-star star ${i <= Math.floor(rating) ? 'filled' : ''}"></i>`;
+            }
+            return stars;
+        }
+
+        function filterCompanies() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            filteredCompanies = companies.filter(company =>
+                company.name.toLowerCase().includes(searchTerm) ||
+                company.symbol.toLowerCase().includes(searchTerm)
+            );
+            renderCompanies();
+        }
+
+        // Modal
+        function openModal(symbol) {
+            const company = companies.find(c => c.symbol === symbol);
+            if (!company) return;
+
+            document.getElementById('modalCompanyName').textContent = company.name;
+            document.getElementById('modalContent').innerHTML = `
+                <div class="grid grid-cols-2 md:grid-cols-4 mb-6">
+                    <div class="text-center" style="padding: 0.75rem; background: rgba(71, 85, 105, 0.5); border-radius: 0.5rem;">
+                        <i class="fas fa-dollar-sign" style="color: #10b981; font-size: 1.5rem; margin-bottom: 0.25rem;"></i>
+                        <p style="font-size: 0.875rem; color: #9ca3af;">Precio</p>
+                        <p style="font-weight: bold;">$${company.price}</p>
+                    </div>
+                    <div class="text-center" style="padding: 0.75rem; background: rgba(71, 85, 105, 0.5); border-radius: 0.5rem;">
+                        <i class="fas fa-chart-line" style="color: #a855f7; font-size: 1.5rem; margin-bottom: 0.25rem;"></i>
+                        <p style="font-size: 0.875rem; color: #9ca3af;">Cambio</p>
+                        <p style="font-weight: bold; color: ${company.change >= 0 ? '#10b981' : '#ef4444'};">
+                            ${company.change >= 0 ? '+' : ''}${company.change}%
+                        </p>
+                    </div>
+                    <div class="text-center" style="padding: 0.75rem; background: rgba(71, 85, 105, 0.5); border-radius: 0.5rem;">
+                        <i class="fas fa-users" style="color: #3b82f6; font-size: 1.5rem; margin-bottom: 0.25rem;"></i>
+                        <p style="font-size: 0.875rem; color: #9ca3af;">Empleados</p>
+                        <p style="font-weight: bold;">${company.employees}</p>
+                    </div>
+                    <div class="text-center" style="padding: 0.75rem; background: rgba(71, 85, 105, 0.5); border-radius: 0.5rem;">
+                        <i class="fas fa-calendar" style="color: #f59e0b; font-size: 1.5rem; margin-bottom: 0.25rem;"></i>
+                        <p style="font-size: 0.875rem; color: #9ca3af;">Fundada</p>
+                        <p style="font-weight: bold;">${company.founded}</p>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="font-size: 1.125rem; font-weight: 600; color: #a855f7; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-info-circle"></i>
+                        Descripción
+                    </h4>
+                    <p style="color: #d1d5db; line-height: 1.6;">${company.description}</p>
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="font-size: 1.125rem; font-weight: 600; color: #a855f7; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-map-marker-alt"></i>
+                        Operaciones en Argentina
+                    </h4>
+                    <p style="color: #d1d5db; line-height: 1.6;">${company.operations}</p>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px solid #475569;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-map-marker-alt" style="color: #9ca3af;"></i>
+                        <span style="font-size: 0.875rem; color: #9ca3af;">${company.headquarters}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.25rem;">
+                        ${renderStars(company.rating)}
+                        <span style="font-size: 0.875rem; color: #9ca3af; margin-left: 0.25rem;">(${company.rating}/5)</span>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('companyModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('companyModal').classList.remove('active');
+        }
+
+        // Production cards
+        function renderProductionCards() {
+            const container = document.getElementById('productionCards');
+            container.innerHTML = productionData.map(region => `
+                <div class="production-card">
+                    <h3 class="production-title">${region.region}</h3>
+                    <div class="production-stats">
+                        <span class="stat-label">Producción</span>
+                        <span class="stat-value">${region.production}k bbl/d</span>
+                    </div>
+                    <div class="production-stats">
+                        <span class="stat-label">Crecimiento</span>
+                        <span class="stat-growth ${region.growth >= 0 ? 'positive' : 'negative'}">
+                            ${region.growth >= 0 ? '+' : ''}${region.growth}%
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('companyModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            renderCompanies();
+            renderProductionCards();
+        });
+    </script>
+</body>
+</html>
